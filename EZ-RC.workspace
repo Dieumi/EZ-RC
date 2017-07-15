@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_workspace_file>
+	<Workspace title="EZ-RC">
+		<Project filename="IRC_server/IRC_server.cbp" />
+		<Project filename="libnet/libnet.cbp" />
+		<Project filename="libdll/libdll.cbp" />
+		<Project filename="irc/irc.cbp" />
+	</Workspace>
+</CodeBlocks_workspace_file>
