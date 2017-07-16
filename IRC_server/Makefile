@@ -32,7 +32,8 @@ LIB_PATHS = ../libnet\
 LIBS = 	lib/libnet.a\
 		lib/libdll.a\
 		dll/irc.so\
-		-ldl
+		-ldl\
+		-pthread\
 
 BUILD_TYPE := debug
 

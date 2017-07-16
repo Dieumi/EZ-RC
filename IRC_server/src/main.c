@@ -6,6 +6,9 @@
 #include "irc.h"
 #include "map.h"
 
+#include <unistd.h>
+#include <pthread.h>
+
 #define EXPOSED_PORT 6667
 #define MAX_PEERS 30
 
@@ -21,6 +24,8 @@ void* irc_dll_handle = NULL;
 HashMap* nicks;
 HashMap* users;
 HashMap* channels;
+
+Context context;
 
 unsigned int sizeof_nullable(char* str)
 {
@@ -174,11 +179,13 @@ void irc_user_deserialize(IRC_User* user, char* input)
 void irc_message_deserialize(IRC_Message* message, char* input)
 {
     irc_user_deserialize(&(message->user), input);
+
     irc_get_command(message->command, input);
+
     message->params_size = irc_get_parameters(message->params, input);
 }
 
-void irc_command_call(Context* context, char* data)
+void irc_command_call(char* data)
 {
     char function_name[IRC_MESSAGE_MAX_LENGTH] = IRC_COMMAND_PREFIX;
     void (*function) (Context*, IRC_Message) = NULL;
@@ -198,28 +205,71 @@ void irc_command_call(Context* context, char* data)
 
     fprintf(stdout, "command %s loaded at address %p\n", function_name, function);
 
-    function(context, message);
+    function(&context, message);
 }
 
 void irc_request_route(int* client_socket, void* buffer, unsigned int buffer_size)
 {
-    Context context;
+    char* lastIndex = ((char*)buffer) + strlen((char*)buffer) - 2;
+
+    *lastIndex = '\0';
+    lastIndex++;
+    *lastIndex = '\0';
 
     context.sender_socket = *client_socket;
-    context.users = users;
-    context.nicks = nicks;
-    context.channels = channels;
-    irc_command_call(&context, (char*)buffer);
+
+    strcpy(context.response, "");
+    irc_command_call((char*)buffer);
     fprintf(stdout, "Replied \"%s\"\n", context.response);
+}
+
+void* ping_peers(void* arg)
+{
+    int i;
+    HashMapEntry* entry;
+    int sock;
+    char buffer[512] = "";
+    char format[512] = "PING %s\r\n";
+
+    while(1)
+    {
+        for(i = 0 ; i < 256 ; i++)
+        {
+            if(strcmp(context.reverse_nicks[i], "") != 0)
+            {
+                entry = HashMap_get(context.nicks, context.reverse_nicks[i]);
+                sock = entry != NULL ? *((int*) entry->value) : 0;
+
+                if(sock != 0)
+                {
+                    sprintf(buffer, format, context.reverse_nicks[i]);
+                    socket_send(sock, buffer, strlen(buffer));
+                }
+            }
+        }
+        sleep(5);
+    }
 }
 
 /// SERVER
 int main(int argc, char** argv)
 {
+    int i;
+    pthread_t ping_thread;
     users = HashMap_create(10, 0.7, 2);
     nicks = HashMap_create(10, 0.7, 2);
     channels = HashMap_create(10, 0.7, 2);
+
+    context.users = users;
+    context.nicks = nicks;
+    context.channels = channels;
+
+    for(i = 0 ; i < 256 ; i++)
+        strcpy(context.reverse_nicks[i], "");
+
     irc_dll_handle = dll_handle_open(IRC_LIB_PATH);
+
+    pthread_create(&ping_thread, NULL, ping_peers, NULL);
 
     socket_server_run(EXPOSED_PORT, MAX_PEERS, irc_request_route);
 

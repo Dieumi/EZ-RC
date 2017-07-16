@@ -5,6 +5,8 @@
     #define IRC_MESSAGE_MAX_LENGTH 513
     #define IRC_MAX_PARAMETERS 15
 
+    #define IRC_MAX_CHANNEL_USERS 10
+
     #define CRLF "\r\n"
 
     #include "map.h"
@@ -16,6 +18,7 @@
         HashMap* nicks;
         HashMap* users;
         HashMap* channels;
+        char reverse_nicks[256][512];
     } Context;
 
     typedef struct IRC_User
@@ -33,6 +36,13 @@
         unsigned int params_size;
     } IRC_Message;
 
+    typedef struct IRC_Channel
+    {
+        char users[IRC_MAX_CHANNEL_USERS][512];
+        unsigned int users_size;
+    } IRC_Channel;
+
     void irc_command_missing(Context* context, IRC_Message message);
+    unsigned char in_array(char array[IRC_MAX_CHANNEL_USERS][512], char value[512]);
 
 #endif // IRC_COMMANDS_H

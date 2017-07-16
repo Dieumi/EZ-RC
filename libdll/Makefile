@@ -24,7 +24,7 @@ CC_FLAGS := -std=gnu99 -O2 -Wall -Wextra
 
 AR_FLAGS := rcs
 
-LIBS =
+LIBS = -ldl\
 
 BUILD_TYPE := debug
 

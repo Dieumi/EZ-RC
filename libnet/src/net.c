@@ -213,7 +213,7 @@ void socket_answers_manage(fd_set *sockets, int clients[], int max_sock, void (*
     int socket;
     int i;
     int val_read;
-    char buffer [2048];
+    char buffer [2048] = "";
 
     for (i = 0; i < max_sock; i++)
     {
@@ -232,6 +232,7 @@ void socket_answers_manage(fd_set *sockets, int clients[], int max_sock, void (*
                 buffer[val_read] = '\0';
                 route_request(&socket, buffer, val_read);
             }
+            bzero(buffer, 2048);
         }
     }
 }
