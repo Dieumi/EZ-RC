@@ -128,7 +128,6 @@ void irc_command_privmsg(Context* context, IRC_Message message)
     strcpy(context->response, buffer);
     strcat(buffer, CRLF);
 
-
     while(ptr_end != NULL)
     {
         ptr_beg = ptr_end;
@@ -137,14 +136,15 @@ void irc_command_privmsg(Context* context, IRC_Message message)
         if(ptr_end != NULL)
         {
             strncpy(nick, ptr_beg, ptr_end - ptr_beg);
+            nick[ptr_end - ptr_beg] = '\0';
             ptr_end++;
         }
         else
         {
-            strncpy(nick, ptr_beg, strlen(ptr_beg));
+            strcpy(nick, ptr_beg);
         }
 
-        entry = HashMap_get(context->nicks, message.params[0]);
+        entry = HashMap_get(context->nicks, nick);
 
         if(entry != NULL)
         {
